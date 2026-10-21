@@ -108,6 +108,34 @@ def test_unsaved_test_key_does_not_replace_saved_key(keys):
     assert resolve_api_key(profile["api_key_ref"], repo=repo) == "saved-key"
 
 
+@pytest.mark.parametrize("base_url,expected_extra", [
+    ("https://api.deepseek.com", {"thinking": {"type": "disabled"}}),
+    ("https://api.deepseek.com/v1/", {"thinking": {"type": "disabled"}}),
+    ("https://dashscope.aliyuncs.com/compatible-mode/v1", None),
+    ("https://api.deepseek.com.example.org/v1", None),
+])
+def test_artifact_generation_uses_final_answer_budget(keys, monkeypatch, base_url, expected_extra):
+    repo, users, _, _ = keys
+    profile = save(repo, users[0], "test-key", base_url=base_url)
+    seen = []
+
+    def create(**kwargs):
+        seen.append(kwargs)
+        return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content="<html>Report</html>"))])
+
+    monkeypatch.setattr("backend.providers.openai_compatible.OpenAI", lambda **_: SimpleNamespace(
+        chat=SimpleNamespace(completions=SimpleNamespace(create=create))
+    ))
+    result = OpenAICompatibleTextProvider().generate_text(TextGenerationRequest(
+        profile=profile, system_prompt="system", user_prompt="task", max_output_tokens=6000,
+    ))
+    assert result == "<html>Report</html>"
+    assert seen[0]["max_tokens"] == 6000
+    assert seen[0].get("extra_body") == expected_extra
+    if expected_extra is None:
+        assert "extra_body" not in seen[0]
+
+
 def test_missing_master_key_fails_safely_without_recreating_it(keys):
     repo, users, master, shared = keys
     profile = save(repo, users[0], "personal-a")

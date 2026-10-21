@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any
+from urllib.parse import urlparse
 
 import httpx
 from openai import APIConnectionError, APITimeoutError, AuthenticationError, OpenAI
@@ -55,6 +56,12 @@ class OpenAICompatibleTextProvider:
             timeout=GENERATION_TIMEOUT,
             max_retries=1,
         )
+        # DeepSeek enables thinking by default and counts it against max_tokens.
+        # Artifact pipelines need the final source within their bounded budget.
+        generation_options: dict[str, Any] = {}
+        if urlparse(profile["base_url"]).hostname == "api.deepseek.com":
+            generation_options["extra_body"] = {"thinking": {"type": "disabled"}}
+
         try:
             response = client.chat.completions.create(
                 model=profile["model"],
@@ -64,6 +71,7 @@ class OpenAICompatibleTextProvider:
                 ],
                 max_tokens=request.max_output_tokens,
                 temperature=request.temperature,
+                **generation_options,
             )
         except AuthenticationError as exc:
             raise ModelProviderError(

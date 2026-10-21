@@ -101,6 +101,11 @@ Runs a minimal provider connectivity check using the submitted or saved profile.
 - First implementation should use an OpenAI-compatible adapter for Qwen unless official docs require otherwise.
 - Default Qwen endpoint/model/context values are pinned in `## Default Qwen Values`; future changes must be re-verified against current official documentation before editing tracked defaults.
 - Pipelines depend on the provider interface, not on environment variables directly.
+- Artifact generation against the exact official `api.deepseek.com` hostname
+  disables provider thinking through `extra_body.thinking.type=disabled`. DeepSeek
+  enables thinking by default, which can exhaust a pipeline's fixed output budget
+  before final source is returned. This adapter option does not change profile
+  fields, Qwen defaults, or requests to other OpenAI-compatible hosts.
 - Context budgeting, including revision-context inclusion, uses `context_window_hint` from the resolved profile. A missing or invalid hint falls back to the backend default, but code should not hard-code revision prompt size solely around that fallback.
 
 ## Errors

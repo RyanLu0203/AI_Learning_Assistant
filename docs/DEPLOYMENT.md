@@ -150,6 +150,14 @@ address bars are readable. Describe prompt improvements and distinguish complete
 steps from proposed improvements. Retain the genuine generation run/manifest
 locally; they are not part of the source repository.
 
+For the official DeepSeek endpoint, the text adapter explicitly disables thinking
+so each artifact pipeline's bounded output budget is available for final HTML or
+code. The first long cloud report attempt returned empty final content under
+DeepSeek's default thinking mode. A short live probe confirmed that disabling
+thinking removes reasoning-token usage; the final report must still be verified
+through an actual successful application run. Other compatible endpoints keep
+their existing request parameters. See the [official thinking-mode guide](https://api-docs.deepseek.com/guides/thinking_mode/).
+
 Submit the report, your own complete source repository URL, `local-ui-check.txt`,
 and `ecs-docker-check.txt`. Keep keys/passwords, `.env*`, `data/`, `workspace/`,
 dependencies and runtime directories out of the source archive and repository.
