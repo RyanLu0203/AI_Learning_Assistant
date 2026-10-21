@@ -6,18 +6,31 @@ server {
     server_name __DOMAIN__;
     client_max_body_size 50m;
 
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    # Basic Auth uses the incoming Authorization header. Forward the app token
+    # separately, after Nginx has authenticated this request.
+    proxy_set_header Authorization $http_x_app_authorization;
+    proxy_set_header Accept-Encoding "";
+    proxy_read_timeout 360s;
+    proxy_send_timeout 360s;
+    proxy_buffering off;
+
+    location /ui/ {
+        auth_basic "BA3073 AI Learning Assistant";
+        auth_basic_user_file /etc/nginx/ai-learning-assistant.htpasswd;
+        proxy_pass http://127.0.0.1:14242;
+        sub_filter_once on;
+        sub_filter '<head>' '<head><meta name="aila-bearer-header" content="X-App-Authorization">';
+    }
+
     location / {
         auth_basic "BA3073 AI Learning Assistant";
         auth_basic_user_file /etc/nginx/ai-learning-assistant.htpasswd;
 
         proxy_pass http://127.0.0.1:14242;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_read_timeout 360s;
-        proxy_send_timeout 360s;
-        proxy_buffering off;
     }
 }

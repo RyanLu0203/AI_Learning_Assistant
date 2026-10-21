@@ -37,7 +37,7 @@ registry password setup yourself and enter the password only at the login prompt
 
 ```sh
 docker login --username YOUR_ACR_USERNAME YOUR_ACR_REGISTRY_HOST
-docker buildx build --platform linux/amd64 --load \
+docker buildx build --platform linux/amd64 --load --provenance=false --sbom=false \
   -t YOUR_ACR_REGISTRY_HOST/YOUR_NAMESPACE/ai-learning-assistant:ba3073 .
 docker image inspect YOUR_ACR_REGISTRY_HOST/YOUR_NAMESPACE/ai-learning-assistant:ba3073 \
   --format '{{.Os}}/{{.Architecture}}'
@@ -47,6 +47,10 @@ docker push YOUR_ACR_REGISTRY_HOST/YOUR_NAMESPACE/ai-learning-assistant:ba3073
 The example targets an x86-64 ECS. Use `linux/arm64` for an ARM ECS instead.
 Record the push digest and image tag without recording registry credentials.
 Test the locally built cloud image before uploading it.
+The provenance/SBOM options omit optional OCI attestation manifests that this ACR
+personal-edition registry rejected. They do not change application authentication
+or disable TLS verification. Keep the source commit, test results and image digest
+as the assignment's build evidence.
 
 ## ECS deployment and Task 2 evidence
 
@@ -123,6 +127,15 @@ take longer than the container deployment.
 
 Basic Auth is separate from BNBU login. Preserve it on all proxied API and UI
 routes; otherwise users could bypass the access-control screen through the API.
+
+The supplied Nginx template also bridges the two authentication headers. Basic
+Auth uses `Authorization`, so Nginx opts the web UI into `X-App-Authorization`
+and forwards that value to the backend as its usual bearer header after the
+proxy login succeeds. Keep the `/ui/` meta-tag injection and both protected
+locations together. Direct local access keeps standard bearer headers. An API
+client of the HTTPS deployment must supply Basic Auth plus
+`X-App-Authorization: Bearer APP_TOKEN` for authenticated app endpoints. Verify
+both layers with real requests; a login-page screenshot alone does not test them.
 
 ## Report and submission
 

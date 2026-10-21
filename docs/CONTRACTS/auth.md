@@ -68,6 +68,14 @@ Response:
 
 Requires `Authorization: Bearer <token>`.
 
+An optional Basic Auth reverse proxy may reserve the browser's `Authorization`
+header for its own login. Its `/ui/` HTML then supplies the meta tag
+`aila-bearer-header` with value `X-App-Authorization`. The web client sends its
+application token in that header, and the proxy forwards it to FastAPI as
+`Authorization: Bearer <token>` after checking Basic Auth. All API routes remain
+behind the proxy login. Direct local clients retain the standard header. The
+backend API and token validation are unchanged; see ADR 012.
+
 Response:
 
 ```json

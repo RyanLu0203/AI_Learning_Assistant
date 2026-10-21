@@ -1,7 +1,9 @@
+import { bearerHeaders } from "./auth-headers.js";
+
 // Fetch through the authenticated artifact API, never through a host file path.
 export async function downloadArtifact(url, token, path, browser = globalThis) {
     const response = await browser.fetch(url, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: bearerHeaders(token, browser.document),
     });
     if (!response.ok) throw new Error(`Artifact download failed (${response.status})`);
     const blob = await response.blob();

@@ -1,4 +1,5 @@
 import { downloadArtifact } from "./artifact-download.js";
+import { bearerHeaders } from "./auth-headers.js";
 import "./styles.css";
 import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.mjs?url";
 import { LOCALES, messages } from "./locales.js";
@@ -132,7 +133,7 @@ function init() {
 async function refreshCurrentUser() {
     try {
         const response = await fetch(`${API_URL}/api/auth/me`, {
-            headers: { Authorization: `Bearer ${state.token}` },
+            headers: { ...bearerHeaders(state.token) },
         });
         if (!response.ok) throw new Error(t("auth.expired"));
         const user = await response.json();
@@ -1439,7 +1440,7 @@ async function handleRun({ isRevision, isRegenerate = false }) {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${state.token}`,
+                ...bearerHeaders(state.token),
             },
             body: JSON.stringify(buildRunPayload({ promptText, uploadIds, revisionOfRunId })),
         });
@@ -1489,7 +1490,7 @@ async function uploadFilesIfNeeded() {
     pending.forEach((item) => formData.append("files", item.file, item.name));
     const response = await fetch(`${API_URL}/api/uploads`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${state.token}` },
+        headers: { ...bearerHeaders(state.token) },
         body: formData,
     });
     const data = await response.json().catch(() => ({}));
@@ -1523,7 +1524,7 @@ async function loadCourses({ preserveSelection = true } = {}) {
     render();
     try {
         const response = await fetch(`${API_URL}/api/courses`, {
-            headers: { Authorization: `Bearer ${state.token}` },
+            headers: { ...bearerHeaders(state.token) },
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(errorMessage(data, t("course.loadFailed")));
@@ -1620,7 +1621,7 @@ async function courseRequest(path, options, fallback) {
         ...options,
         headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${state.token}`,
+            ...bearerHeaders(state.token),
             ...(options?.headers || {}),
         },
     });
@@ -1719,7 +1720,7 @@ async function loadModelProfiles() {
     if (!state.token) return;
     try {
         const response = await fetch(`${API_URL}/api/settings/model-profiles`, {
-            headers: { Authorization: `Bearer ${state.token}` },
+            headers: { ...bearerHeaders(state.token) },
         });
         const data = await response.json().catch(() => []);
         if (!response.ok) throw new Error(errorMessage(data, t("model.loadFailed")));
@@ -1779,7 +1780,7 @@ async function handleModelSettingsSave(event) {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${state.token}`,
+                ...bearerHeaders(state.token),
             },
             body: JSON.stringify(buildModelProfilePayload({ includeApiKey: true })),
         });
@@ -1817,7 +1818,7 @@ async function handleModelSettingsTest() {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${state.token}`,
+                ...bearerHeaders(state.token),
             },
             body: JSON.stringify(useSubmittedProfile ? buildModelProfilePayload({ includeApiKey: true }) : {}),
         });
@@ -2052,7 +2053,7 @@ function stopRunPolling() {
 async function pollRunEvent(runId) {
     if (!runId || !state.token) return;
     const response = await fetch(`${API_URL}/api/runs/${encodeURIComponent(runId)}/events`, {
-        headers: { Authorization: `Bearer ${state.token}` },
+        headers: { ...bearerHeaders(state.token) },
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(errorMessage(data, t("run.statusRefreshFailed")));
@@ -2076,7 +2077,7 @@ async function hydrateRunArtifacts(runId) {
     render();
     try {
         const response = await fetch(`${API_URL}/api/runs/${encodeURIComponent(runId)}/artifacts`, {
-            headers: { Authorization: `Bearer ${state.token}` },
+            headers: { ...bearerHeaders(state.token) },
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(errorMessage(data, t("source.artifactLoadFailed")));
@@ -2118,7 +2119,7 @@ async function hydrateTextArtifacts(runId, artifacts) {
     await Promise.all(textArtifacts.map(async (artifact) => {
         try {
             const response = await fetch(artifactUrl(runId, artifact), {
-                headers: { Authorization: `Bearer ${state.token}` },
+                headers: { ...bearerHeaders(state.token) },
             });
             const text = await response.text();
             if (!response.ok) throw new Error(safeDisplayMessage(text || t("source.artifactReadFailed")));
@@ -2237,7 +2238,7 @@ async function renderPdfPageToState(runId, artifact, pageNumber) {
 
 async function renderPdfArtifactPage(runId, artifact, pageNumber) {
     const response = await fetch(artifactUrl(runId, artifact), {
-        headers: { Authorization: `Bearer ${state.token}` },
+        headers: { ...bearerHeaders(state.token) },
     });
     if (!response.ok) {
         const text = await response.text().catch(() => "");
