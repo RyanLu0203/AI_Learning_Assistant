@@ -25,6 +25,58 @@ from backend.providers.base import (
 from backend.timing import RunTimingRecorder, measure_stage
 
 
+BA3073_REPORT_INSTRUCTIONS = """[BA3073 Deployment Report Requirements]
+Write the BA3073 individual assignment, From AI Agent to Cloud Service, using
+only the deployment evidence supplied in the task and prepared context.
+
+Structure the report as: title and student identity (only if supplied), abstract,
+system architecture, Task 1 local Docker deployment, report-prompt improvements,
+Task 2 Alibaba Cloud ACR and ECS deployment, Task 3 domain/DNS/Nginx/HTTPS and
+reverse-proxy access control, verification results, security and cost analysis,
+limitations and improvements, conclusion, and references.
+
+Explain the role of FastAPI, the browser UI, SQLite metadata, the mounted data/
+and workspace/ directories, the OpenAI-compatible model API, and Playwright
+HTML-to-PDF conversion. Describe the actual configured provider, model, CPU
+architecture, image tag/digest, commands, URLs, and observed test results only
+when supplied. Distinguish the ARM Mac build from an amd64 ECS image if relevant.
+Explain the ACR push/pull path and why rebuilding or replacing a container must
+preserve the bind-mounted database, encryption master key, and generated files.
+
+Discuss Task 1's local-ui-check.txt and Task 2's ecs-docker-check.txt. Include
+an evidence table linking each requirement to its supplied evidence ID, capture
+time, observed result, and status. A command being recommended is not evidence
+that it ran. Never invent successful checks, screenshots, IP addresses, domains,
+student details, cloud resources, measurements, prices, or references. Mark
+missing evidence as NOT VERIFIED and describe the remaining action explicitly.
+Label example commands and proposed improvements separately from completed work.
+
+Include the supplied browser screenshots for local and ECS-IP access, plus the
+HTTPS domain URL and the successful reverse-proxy access-control screenshot.
+Preserve the visible address bar. Embed an image only when its actual image data
+or supported local image reference was supplied. Otherwise use a clearly labelled
+missing-evidence note; never create a simulated screenshot or fake browser chrome.
+Use figure captions with evidence IDs so genuine screenshots can be inserted.
+
+Explain that Task 2 temporarily permits port 14242 only from the student's public
+IP. For Task 3, explain DNS A resolution, Nginx forwarding to 127.0.0.1:14242,
+ports 80/443, certificate issuance/renewal, and closing public port 14242.
+The extra reverse-proxy authentication must be separate from the application's
+BNBU login. Report whether unauthenticated and authenticated access were tested.
+Never print API keys, passwords, bearer tokens, private keys, or encryption keys.
+Explain secret storage, backups, API usage costs, ECS/storage/bandwidth/domain
+cost categories, and cleanup of chargeable resources without inventing amounts.
+
+Explain how the revised essay_html.py instructions improve structure, factual
+grounding, evidence coverage, and clarity over the original generic essay prompt.
+Use the requested report language and precise, readable technical prose. Aim for
+10-14 A4 pages including figures and references, with an absolute maximum of
+20 pages. Use compact tables, readable 10.5-11pt text, inline CSS and sensible
+page breaks; avoid clipped commands, oversized figures and near-empty pages.
+Do not claim a final page count until the rendered PDF has been checked.
+"""
+
+
 def run_essay_html_pipeline(
     *,
     artifact_run: ArtifactRun,
@@ -143,6 +195,9 @@ def build_essay_html_prompt(
         "report deliverables as self-contained HTML documents. Return only the "
         "requested HTML source, with no surrounding explanation."
     )
+    task_lower = task_text.casefold()
+    if "ba3073" in task_lower or "from ai agent to cloud service" in task_lower:
+        system_prompt += "\n\n" + BA3073_REPORT_INSTRUCTIONS
     output_instruction = (
         "Return one complete self-contained HTML document. It must start with "
         "<!doctype html> and include <html>, <head>, and <body>. Include all CSS "

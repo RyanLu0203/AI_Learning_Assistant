@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile
     image: ai-learning-assistant-backend:local
     ports:
-      - "${AILA_BACKEND_PORT:-14242}:14242"
+      - "${AILA_BIND_ADDRESS:-127.0.0.1}:${AILA_BACKEND_PORT:-14242}:14242"
     environment:
       APP_SQLITE_PATH: /app/data/app.sqlite
       WORKSPACE_ROOT: /app/workspace

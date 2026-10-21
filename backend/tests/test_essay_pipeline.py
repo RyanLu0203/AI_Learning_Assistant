@@ -3,6 +3,7 @@ from pathlib import Path
 
 from backend.core.runs import create_run, make_run_executor
 from backend.providers.base import ModelProviderError
+from backend.pipelines.essay_html import build_essay_html_prompt
 
 
 ESSAY_HTML = """```html
@@ -15,6 +16,47 @@ ESSAY_HTML = """```html
 <body><article><h1>Answer</h1><p>A concise essay.</p></article></body>
 </html>
 ```"""
+
+
+def test_deployment_report_guidance_reaches_the_model_request(
+    tmp_path, repo_with_user, fake_model_provider_factory, mock_pdf_converter,
+    noop_search_adapter,
+):
+    repo, user = repo_with_user
+    provider = fake_model_provider_factory(ESSAY_HTML)
+    body = create_run(
+        repo, current_user=user,
+        request={"task_text": "Write my BA3073 deployment report. Task 2 evidence is missing.",
+                 "intent": "essay_latex", "search_mode": "off"},
+        workspace_root=str(tmp_path / "workspace"),
+        executor=make_run_executor(provider, pdf_converter=mock_pdf_converter),
+        search_adapter=noop_search_adapter,
+    )
+    assert body["status"] == "succeeded"
+    prompt = provider.requests[0].system_prompt
+    for requirement in ("NOT VERIFIED", "20 pages", "local-ui-check.txt",
+                        "ecs-docker-check.txt", "reverse-proxy authentication",
+                        "Never invent", "Never print API keys"):
+        assert requirement in prompt
+    assert "Task 2 evidence is missing" in provider.requests[0].user_prompt
+
+
+def test_assignment_title_also_enables_deployment_report_guidance():
+    system, _ = build_essay_html_prompt(
+        task_text="From AI Agent to Cloud Service: report",
+        context_bundle="", options={}, search={},
+    )
+    assert "BA3073 Deployment Report Requirements" in system
+
+
+def test_unrelated_essay_keeps_generic_instructions_and_supplied_context():
+    system, user = build_essay_html_prompt(
+        task_text="Write an essay on mobile computing.",
+        context_bundle="A source mentions BA3073.", options={}, search={},
+    )
+    assert "BA3073 Deployment Report Requirements" not in system
+    assert "A source mentions BA3073." in user
+    assert "self-contained HTML document" in user
 
 
 def test_essay_html_pipeline_writes_source_and_converted_pdf(

@@ -16,11 +16,13 @@ RUN apt-get update \
 
 COPY backend/requirements.txt backend/requirements.txt
 COPY backend/requirements-dev.txt backend/requirements-dev.txt
+ARG PIP_INDEX_URL=https://pypi.org/simple
 RUN python -m pip install --upgrade pip \
     && python -m pip install -r backend/requirements-dev.txt
+ARG PLAYWRIGHT_DOWNLOAD_HOST
 RUN sed -i 's|http://deb.debian.org|https://deb.debian.org|g' /etc/apt/sources.list.d/debian.sources \
     && printf 'Acquire::Retries "3";\n' > /etc/apt/apt.conf.d/80-download-retries \
-    && python -m playwright install --with-deps chromium
+    && python -m playwright install --with-deps --only-shell chromium
 
 COPY backend backend
 COPY pytest.ini pytest.ini

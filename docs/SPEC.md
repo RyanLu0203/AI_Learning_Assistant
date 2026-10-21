@@ -6,6 +6,16 @@ Status: Complete
 
 # Product Specification
 
+## BA3073 Deployment Report (2026-10-21)
+
+Essay requests mentioning BA3073 or "From AI Agent to Cloud Service" receive
+assignment-specific report instructions. Reports cover all three deployment
+tasks, prompt improvements, architecture, verification, security and costs.
+Only supplied deployment evidence can support completed-work claims; missing
+evidence is labelled NOT VERIFIED. Genuine browser screenshots retain the address
+bar, secrets are excluded, and the rendered report must be at most 20 pages.
+Other essay requests keep the generic HTML output contract.
+
 ## Account Display
 
 The signed-in identity control displays the user's email address without a role
